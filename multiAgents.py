@@ -113,29 +113,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-        Returns the minimax action from the current gameState using self.depth
-        and self.evaluationFunction.
-
-        Here are some method calls that might be useful when implementing minimax.
-
-        gameState.getLegalActions(agentIndex):
-        Returns a list of legal actions for an agent
-        agentIndex=0 means Pacman, ghosts are >= 1
-
-        gameState.generateSuccessor(agentIndex, action):
-        Returns the successor game state after an agent takes an action
-
-        gameState.getNumAgents():
-        Returns the total number of agents in the game
-
-        gameState.isWin():
-        Returns whether or not the game state is a winning state
-
-        gameState.isLose():
-        Returns whether or not the game state is a losing state
-        """
-        # print(self.depth)
         return self.minimax(0, 0, True, gameState)[0]
         
     def minimax(self, currentDepth, agentIndex, isMax, gameState):
@@ -146,13 +123,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
         agentIndex = 0 if allPlayedPerCurrentDepth else agentIndex
         # If all agents (pacman + all ghosts) got to play in a given depth, increase also the currentDepth
         currentDepth = (currentDepth + 1) if allPlayedPerCurrentDepth else currentDepth
-        # print(isMax)
 
-        # print(currentDepth, agentIndex, isMax, maxTreeDepth)
         # If we reached the max tree depth, won, or lost
         if ((currentDepth == self.depth) or gameState.isWin() or gameState.isLose()):
             return [None, self.evaluationFunction(gameState)]
 
+        # Recursion
         if (isMax):
             return self.handleMaximazer(currentDepth, agentIndex, gameState)
         else:
@@ -172,7 +148,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             score = self.minimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
             scores.append(score)
 
-
+        # Return preparation
         bestScore = max(scores)
         bestActionsIndex = scores.index(bestScore)
         bestAction = actions[bestActionsIndex]
@@ -180,7 +156,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return [bestAction, bestScore]
 
     def handleMinimizer(self, currentDepth, agentIndex, gameState): 
-
         actions = gameState.getLegalActions(agentIndex)
         scores = []
 
@@ -194,13 +169,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
             score = self.minimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
             scores.append(score)
 
+        # Return preparation
         bestScore = min(scores)
         bestActionsIndex = scores.index(bestScore)
         bestAction = actions[bestActionsIndex]
 
         return [bestAction, bestScore]
-
-
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -208,11 +182,85 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.minimaxPrune(0, 0, True, gameState)[0]
+        
+    def minimaxPrune(self, currentDepth, agentIndex, isMax, gameState, alpha=float('-inf'), beta=float('inf')):
+        # During recursion, if agentIndex exceeded number of players
+        allPlayedPerCurrentDepth = (agentIndex >= gameState.getNumAgents())
+
+        # If it is pacman's turn again, set it
+        agentIndex = 0 if allPlayedPerCurrentDepth else agentIndex
+        # If all agents (pacman + all ghosts) got to play in a given depth, increase also the currentDepth
+        currentDepth = (currentDepth + 1) if allPlayedPerCurrentDepth else currentDepth
+
+        # If we reached the max tree depth, won, or lost
+        if ((currentDepth == self.depth) or gameState.isWin() or gameState.isLose()):
+            return [None, self.evaluationFunction(gameState)]
+
+        # Recursion
+        if (isMax):
+            return self.handleMaximazer(currentDepth, agentIndex, gameState, alpha, beta)
+        else:
+            return self.handleMinimizer(currentDepth, agentIndex, gameState, alpha, beta)
+
+    def handleMaximazer(self, currentDepth, agentIndex, gameState, alpha, beta): 
+        actions = gameState.getLegalActions(agentIndex)
+        bestScore = float('-inf')
+        scores = []
+
+        for action in actions: 
+            # Minimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, action)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            score = self.minimaxPrune(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState, alpha, beta)[1]
+            scores.append(score)
+
+            # Adjusting best score for comparison to alfa max
+            bestScore = max(scores)
+
+            # Pruning handling
+            alpha = max(alpha, bestScore)
+            if alpha > beta: 
+                break
+
+        # Return preparation
+        bestActionsIndex = scores.index(bestScore)
+        bestAction = actions[bestActionsIndex]
+
+        return [bestAction, bestScore]
+
+    def handleMinimizer(self, currentDepth, agentIndex, gameState, alpha, beta): 
+        actions = gameState.getLegalActions(agentIndex)
+        bestScore = float('inf')
+        scores = []
+
+        for action in actions: 
+            # Minimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, action)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            score = self.minimaxPrune(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState, alpha, beta)[1]
+            scores.append(score)
+
+            # Adjusting best score for comparison to beta min
+            bestScore = min(scores)
+
+            # Pruning handling
+            beta = min(beta, bestScore)
+            if beta < alpha: 
+                break
+
+        # Return preparation
+        bestActionsIndex = scores.index(bestScore)
+        bestAction = actions[bestActionsIndex]
+
+        return [bestAction, bestScore]
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
