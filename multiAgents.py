@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from pacman import GameState
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -134,8 +135,72 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # print(self.depth)
+        return self.minimax(0, 0, True, gameState)[0]
+        
+    def minimax(self, currentDepth, agentIndex, isMax, gameState):
+        # During recursion, if agentIndex exceeded number of players
+        allPlayedPerCurrentDepth = (agentIndex >= gameState.getNumAgents())
+
+        # If it is pacman's turn again, set it
+        agentIndex = 0 if allPlayedPerCurrentDepth else agentIndex
+        # If all agents (pacman + all ghosts) got to play in a given depth, increase also the currentDepth
+        currentDepth = (currentDepth + 1) if allPlayedPerCurrentDepth else currentDepth
+        # print(isMax)
+
+        # print(currentDepth, agentIndex, isMax, maxTreeDepth)
+        # If we reached the max tree depth, won, or lost
+        if ((currentDepth == self.depth) or gameState.isWin() or gameState.isLose()):
+            return [None, self.evaluationFunction(gameState)]
+
+        if (isMax):
+            return self.handleMaximazer(currentDepth, agentIndex, gameState)
+        else:
+            return self.handleMinimizer(currentDepth, agentIndex, gameState)
+
+    def handleMaximazer(self, currentDepth, agentIndex, gameState): 
+        actions = gameState.getLegalActions(agentIndex)
+        scores = []
+
+        for action in actions: 
+            # Minimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, action)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            score = self.minimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
+            scores.append(score)
+
+
+        bestScore = max(scores)
+        bestActionsIndex = scores.index(bestScore)
+        bestAction = actions[bestActionsIndex]
+
+        return [bestAction, bestScore]
+
+    def handleMinimizer(self, currentDepth, agentIndex, gameState): 
+
+        actions = gameState.getLegalActions(agentIndex)
+        scores = []
+
+        for action in actions: 
+            # Minimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, action)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            score = self.minimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
+            scores.append(score)
+
+        bestScore = min(scores)
+        bestActionsIndex = scores.index(bestScore)
+        bestAction = actions[bestActionsIndex]
+
+        return [bestAction, bestScore]
+
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
