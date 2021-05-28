@@ -20,6 +20,7 @@ import random, util
 from game import Agent
 
 class ReflexAgent(Agent):
+    #################################################################### NOT IMPLEMENTED 
     """
     A reflex agent chooses an action at each choice point by examining
     its alternatives via a state evaluation function.
@@ -108,6 +109,7 @@ class MultiAgentSearchAgent(Agent):
         self.depth = int(depth)
 
 class MinimaxAgent(MultiAgentSearchAgent):
+    #################################################################### IMPLEMENTED
     """
     Your minimax agent (question 2)
     """
@@ -177,6 +179,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return [bestAction, bestScore]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
+    #################################################################### IMPLEMENTED 
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
@@ -263,6 +266,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
+    #################################################################### IMPLEMENTED (getAction only)
     """
       Your expectimax agent (question 4)
     """
