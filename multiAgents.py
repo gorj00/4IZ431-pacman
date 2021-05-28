@@ -268,14 +268,75 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-        Returns the expectimax action using self.depth and self.evaluationFunction
+        return self.expectimax(0, 0, True, gameState)[0]
+        
+    def expectimax(self, currentDepth, agentIndex, isMax, gameState):
+        # During recursion, if agentIndex exceeded number of players
+        allPlayedPerCurrentDepth = (agentIndex >= gameState.getNumAgents())
 
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # If it is pacman's turn again, set it
+        agentIndex = 0 if allPlayedPerCurrentDepth else agentIndex
+        # If all agents (pacman + all ghosts) got to play in a given depth, increase also the currentDepth
+        currentDepth = (currentDepth + 1) if allPlayedPerCurrentDepth else currentDepth
+
+        # If we reached the max tree depth, won, or lost
+        if ((currentDepth == self.depth) or gameState.isWin() or gameState.isLose()):
+            return [None, self.evaluationFunction(gameState)]
+
+        # Recursion
+        if (isMax):
+            return self.handleMaximazer(currentDepth, agentIndex, gameState)
+        else:
+            return self.handleProb(currentDepth, agentIndex, gameState)
+
+    def handleMaximazer(self, currentDepth, agentIndex, gameState): 
+        actions = gameState.getLegalActions(agentIndex)
+        scores = []
+
+        for action in actions: 
+            # Minimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, action)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            score = self.expectimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
+            scores.append(score)
+
+        # Return preparation
+        bestScore = max(scores)
+        bestActionsIndex = scores.index(bestScore)
+        bestAction = actions[bestActionsIndex]
+
+        return [bestAction, bestScore]
+
+    def handleProb(self, currentDepth, agentIndex, gameState): 
+        actions = gameState.getLegalActions(agentIndex)
+        scores = []
+
+        # Return preparation
+        action = None
+        score = 0.0
+
+        # Scores are later adjusted based on the probability of the action
+        prob = 1.0/len(actions)
+
+        for actionItem in actions: 
+            # expectimax parameter preparation
+            nextGameState = gameState.generateSuccessor(agentIndex, actionItem)
+            nextAgentIndex = agentIndex + 1
+            nextAgentIsMax = (nextAgentIndex == 0) or (nextAgentIndex >= gameState.getNumAgents())
+
+            # Score handling
+            scoreItem = self.expectimax(currentDepth, nextAgentIndex, nextAgentIsMax, nextGameState)[1]
+            scores.append(scoreItem)
+            action = actionItem
+
+        # Summarize the score with its probabilities
+        for x, storedScore in enumerate(scores):
+            score += prob * storedScore
+
+        return [action, score]
 
 def betterEvaluationFunction(currentGameState):
     """
